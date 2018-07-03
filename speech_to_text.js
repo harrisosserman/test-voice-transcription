@@ -1,3 +1,6 @@
+//set the credntials.json file
+process.env.GOOGLE_APPLICATION_CREDENTIALS = 'credentials.json';
+
 // Imports the Google Cloud client library.
 const Storage = require('@google-cloud/storage');
 
