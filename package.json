@@ -1,0 +1,24 @@
+{
+  "name": "test-voice-transcription",
+  "version": "1.0.0",
+  "description": "to test out various voice transcription libraries",
+  "main": "Speech to text.js",
+  "dependencies": {
+    "@google-cloud/speech": "^1.5.0",
+    "@google-cloud/storage": "^1.7.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harrisosserman/test-voice-transcription.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/harrisosserman/test-voice-transcription/issues"
+  },
+  "homepage": "https://github.com/harrisosserman/test-voice-transcription#readme"
+}
