@@ -4,7 +4,7 @@ var s3 = new AWS.S3();
 
 // Bucket names must be unique across all S3 users
 
-var myBucket = 'talkhiring';
+var myBucket = 'talkhiring-long-example';
 
 var myKey = 'long_example.wav';
 
@@ -12,7 +12,7 @@ s3.createBucket({Bucket: myBucket}, function(err, data) {
 
 if (err) {
 
-   console.log(err);
+   console.log("===We got err", err);
 
    } else {
 

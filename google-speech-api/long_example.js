@@ -7,7 +7,7 @@ const speech = require('@google-cloud/speech');
 // Creates a client
 const client = new speech.SpeechClient();
 
-const gcsUri = '';
+const gcsUri = 'gs://talkhiring/long_example.wav';
 const encoding = 'LINEAR16';
 const sampleRateHertz = 22050;
 const languageCode = 'en-US';
