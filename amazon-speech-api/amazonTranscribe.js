@@ -22,7 +22,7 @@ var httpValues = {
 var options = {}; 
 
 // Create a bucket for the audio file
-function createBucket(bucketName, audioFile){
+function bucketCreator(bucketName, audioFile){
       s3.createBucket({Bucket: bucketName}, function(err, data) {
       if (err) {
 
@@ -89,11 +89,10 @@ var transcription = (param={}) => {
     var __init = () => {
       transcription.createVocabulary();
       transcription.getTranscription();
-      transcription.presentData();
     }
     //Initialize
     __init();
   }
 
-createBucket(defaultOptionValues.myBucket, defaultOptionValues.myKey);
+bucketCreator(defaultOptionValues.myBucket, defaultOptionValues.myKey);
 
