@@ -1,0 +1,19 @@
+So I tried 2 ways to transcribe the file programmaticly, neither is working
+	1. I tried sending the transcription inputs attached to a request to awsapi
+		When I run node amazonTranscribe here's what I receive: 
+error: <?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>MalformedXML</Code><Message>The XML you provided was not well-forme
+d or did not validate against our published schema</Message><RequestId>B4256D3C2
+8DCF137</RequestId><HostId>VYBmtA6P8jpvQj2eYzJTG9sHb9FpMIlw1+0T6eRlC+44vdfCTj98i
+zo+Sz6zMaNp0sQzolxTy7c=</HostId></Error>
+		However I made sure to place a 'content-type' : "application/json" and for the json parameter I placed my 
+			inputs.
+		I can't seem to convert my json 
+	2. I tried sending my transcription inputs via aws transcribe. Here's what I entered and the error:
+>aws transcribe start-transcription-job ^
+More? --region es-US ^
+More? --cli-input-json file://test-start-transcribe.json
+
+('Connection aborted.', error(10060, 'A connection attempt failed because the co
+nnected party did not properly respond after a period of time, or established co
+nnection failed because connected host has failed to respond'))
