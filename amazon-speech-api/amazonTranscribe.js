@@ -1,6 +1,5 @@
-var http = require('http')
+var request = require('request')
 var AWS = require('aws-sdk');
-
 var s3 = new AWS.S3();
 
 // Bucket names must be unique across all S3 users
@@ -8,17 +7,21 @@ var defaultOptionValues = {
   myBucket : "talk-long-example",
   myKey : "long_example.wav",
   LanguageCode: "es-US",
-  format: "wav",
-  MediaSampleRateHertz: "22050",
-  OutputBucketName: "",
+  format: ".WAV",
+  MediaSampleRateHertz: "22050"
+};
+defaultOptionValues.OutputBucketName = defaultOptionValues.myBucket;
 
-}
-var httpValues = {
-      hostname: 'localhost',
-      port: 80,
-      path: '/',
-      agent: false  // create a new agent just for this one request
-    }
+var requestValues = {
+        url: url,
+        method: "PUT",
+        headers: {
+          'content-type': "application/json",
+          },
+        json: options,
+    }  
+
+var url = 'http://s3.amazonaws.com/' + defaultOptionValues.myBucket;
 var options = {}; 
 
 // Create a bucket for the audio file
@@ -50,12 +53,25 @@ function bucketCreator(bucketName, audioFile){
         })
     }
 // Check for custom or default transcription options
-var optionsChecker = (params={}) => {
-      params = options;
-      if (params !== {}){
-        transcription.options = params;
-      } else {
-          transciption.options = {
+// var optionsChecker = (params={}) => {
+//       params = options;
+//       if (params != {}){
+//         options = params;
+//       } else {
+//           options = {
+//             "LanguageCode": defaultOptionValues.LanguageCode,
+//             "Media": {
+//               "MediaFileUri": defaultOptionValues.myKey
+//               },
+//             "MediaFormat": defaultOptionValues.format,
+//             "MediaSampleRateHertz" : defaultOptionValues.MediaSampleRateHertz,
+//             "OutputBucketName": defaultOptionValues.OutputBucketName,
+//             "TranscriptionJobName": defaultOptionValues.TranscriptionJobName,
+//             }
+//       }
+//     }
+var transcription = (param={}) => {
+    var options = {
             "LanguageCode": defaultOptionValues.LanguageCode,
             "Media": {
               "MediaFileUri": defaultOptionValues.myKey
@@ -65,34 +81,38 @@ var optionsChecker = (params={}) => {
             "OutputBucketName": defaultOptionValues.OutputBucketName,
             "TranscriptionJobName": defaultOptionValues.TranscriptionJobName,
             }
-      }
-    }
-var transcription = (param={}) => {   
+     
     // Create an request to start a transcription job to api
     function createVocabulary(params= {}){
-      optionsChecker(params)
-      http.get(httpValues, (res) => {
-      // Do stuff with response
-      });
+      // fire request
+      request(requestValues, function (error, response, body) {
+          if (!error && response.statusCode === 200) {
+              console.log(body);
+          }
+          else {
+            errorBody = body;
+              console.log("error: " + errorBody)
+              console.log("response.statusCode: " + response.statusCode)
+              console.log("response.statusText: " + response.statusText)
+          }
+      })
     }
     
-    // Send a http get request to get the data from the transcripton bucket
-    function getTranscription(params={}){
-      // Create a function to present data
-      var presentData = (data) => {};
-      optionsChecker(params)
-      http.get(httpValues, (res) => {
-          presentData(res);
-      });
-    }
+    // // Send a http get request to get the data from the transcripton bucket
+    // function getTranscription(params={}){
+    //   // Create a function to present data
+    //   var presentData = (data) => {};
+    //   optionsChecker(params)
+    //   http.get(httpValues, (res) => {
+    //       presentData(res);
+    //   });
+    // }
     // init Function
     var __init = () => {
-      transcription.createVocabulary();
-      transcription.getTranscription();
+      createVocabulary();
     }
     //Initialize
     __init();
   }
-
-bucketCreator(defaultOptionValues.myBucket, defaultOptionValues.myKey);
+transcription()
 

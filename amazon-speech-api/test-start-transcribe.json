@@ -1,0 +1,8 @@
+{
+ "TranscriptionJobName": "firstTranscribe",
+ "LanguageCode": "en-US",
+ "MediaFormat": "wav",
+ "Media": {
+ 	"MediaFileUri": "https://talk-long-example/long_example.wav"
+ }
+}
