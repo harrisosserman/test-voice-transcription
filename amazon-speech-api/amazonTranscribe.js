@@ -12,6 +12,7 @@ var defaultOptionValues = {
 };
 defaultOptionValues.OutputBucketName = defaultOptionValues.myBucket;
 
+var url = 'http://s3.amazonaws.com/' + defaultOptionValues.myBucket;
 var requestValues = {
         url: url,
         method: "PUT",
@@ -21,7 +22,6 @@ var requestValues = {
         json: options,
     }  
 
-var url = 'http://s3.amazonaws.com/' + defaultOptionValues.myBucket;
 var options = {}; 
 
 // Create a bucket for the audio file
@@ -85,7 +85,9 @@ var transcription = (param={}) => {
     // Create an request to start a transcription job to api
     function createVocabulary(params= {}){
       // fire request
+      console.log("==requestValues ", requestValues)
       request(requestValues, function (error, response, body) {
+        console.log("===body is ", body)
           if (!error && response.statusCode === 200) {
               console.log(body);
           }
