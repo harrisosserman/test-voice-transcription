@@ -3,14 +3,6 @@ const AWS = require('aws-sdk');
 AWS.config.update({region:'us-east-1'});
 const transcribeservice = new AWS.TranscribeService();
 
-const params = {
-	file: 'https://s3.amazonaws.com/talk-long-example/REC-40.-Driving.mp3',
-	format: 'mp3',
-	jobName: 'transcribe-anson-voice-recording-test-11',
-	outputBucketName: 'talk-long-example',
-	outputJson:'https://s3.amazonaws.com/talk-long-example/transcribe-anson-voice-recording-test-10.json',
-};
-
 function createVocabulary() {
   const params = {
     LanguageCode: 'en-US',
@@ -53,11 +45,23 @@ function getTranscriptionJob(outputJson){
 	});
 }
 
-function transcribe(transcriptionObject, newTranscribe=true) {
-	this.transcriptionObject = transcriptionObject;
+function transcribe(transcriptionObject={}, newTranscribe=true) {
+	const params = {
+    file: 'https://s3.amazonaws.com/talk-long-example/REC-40.-Driving.mp3',
+    format: 'mp3',
+    jobName: 'transcribe-anson-voice-recording-test-11',
+    outputBucketName: 'talk-long-example',
+    outputJson:'https://s3.amazonaws.com/talk-long-example/transcribe-anson-voice-recording-test-10.json',
+  }
+	if (transcriptionObject != {}){
+		this.transcriptionObject = transcriptionObject;
+	} else {
+		this.transcriptionObject = params;
+	}
 	if (newTranscribe == false){
 		startTranscriptionJob(transcriptionObject);
-	}	
+	}
+  this.transcribeComplete(params);	
 }
 transcribe.prototype.getProgress = ()=>{
 		transcribeservice.listTranscriptionJobs({Status:'COMPLETED'}, (err, results)=> {console.log(err, results)});
@@ -65,10 +69,9 @@ transcribe.prototype.getProgress = ()=>{
 		transcribeservice.listTranscriptionJobs({Status:'Failed'}, (err, results)=> {console.log(err, results)})
 	}
 //Requires global params arg, and returns string containing transcription
-transcribe.prototype.transcribeComplete = (obj)=>{
-		return getTranscriptionJob(obj.outputJson);
+transcribe.prototype.transcribeComplete = (transcriptionObject)=>{
+		return getTranscriptionJob(transcriptionObject.outputJson);
 	}
-let transcription = new transcribe(params);
+let transcription = new transcribe();
 // // Uncomment to the list the progression of all transcription jobs
 // transcription.getProgress();
-transcription.transcribeComplete(transcriptionOptions);
