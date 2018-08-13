@@ -81,13 +81,20 @@ transcribe(params, true, (err, response) => {
       }
       console.log("body", body)
       getFromS3Bucket(params.outputBucketName, params.jobName + '.json', (err, bucketContents) => { 
-        if (err) {
-          console.error(err);
-          return;
-        }
-        console.log("bucketContents", bucketContents)
+          if (err) {
+            console.error(err);
+            return;
+          }
+          const stringifiedBody = bucketContents.Body.toString();
+          try {
+            const parsedBody = JSON.parse(stringifiedBody);
+            console.log(parsedBody.results.transcripts[0].transcript);
+          }catch (e) {
+            console.error(e);
+          }
       });
     });
   }
   tryToGetTranscriptionJob();
 });
+
