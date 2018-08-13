@@ -2,6 +2,7 @@ const request = require('request')
 const AWS = require('aws-sdk');
 AWS.config.update({region:'us-east-1'});
 const transcribeservice = new AWS.TranscribeService();
+const s3 = new AWS.S3();
 
 function generateRandomString() {
   return Math.random().toString(36).substring(7);
@@ -14,7 +15,7 @@ const params = {
   outputBucketName: 'talkhiring-long-example'
 };
 
-function startTranscriptionJob(transcriptionObject) {
+function startTranscriptionJob(transcriptionObject, callback) {
   const params = {
     LanguageCode: 'en-US',
     Media: { /* required */
@@ -24,61 +25,57 @@ function startTranscriptionJob(transcriptionObject) {
     MediaFormat: transcriptionObject.format,
     OutputBucketName: transcriptionObject.outputBucketName,
     TranscriptionJobName: transcriptionObject.jobName, /* required */
-    Settings: {
-      // ChannelIdentification: false,
-      // MaxSpeakerLabels: 0,
-      // ShowSpeakerLabels: false
-    }
+    Settings: {}
   }
-  console.log("starting transcribe")
-    transcribeservice.startTranscriptionJob(params, function(err, data) {
+  transcribeservice.startTranscriptionJob(params, callback);
+};
 
-      console.log("startTranscriptionJob response ", err, data)
-
-      if (err) console.log(err, err.stack); // an error occurred
-      else     console.log(data);           // successful response
-    });
-  };
-
-function getTranscriptionJob(){
-  // request(outputJson, { json: true }, (err, res, body) => {
-  //   if (err) { return console.log(err); }
-  //     console.log(body.results.transcripts);
-  // });
+function getTranscriptionJob(callback) {
   transcribeservice.getTranscriptionJob({
-    TranscriptionJobName: '0cvm18x8bvfuwgwj0pb9'
-  }, (err, response) => {
-    console.log("Got response from getTranscriptionJob ", err, response)
-    request(response.TranscriptionJob.Transcript.TranscriptFileUri, {json: true}, (err, res, body) => {
-      console.log(err, body)
-      console.log("body.results.transcripts", body.results.transcripts)
-    });
-  })
+    TranscriptionJobName: params.jobName
+  }, callback);
 }
 
-function transcribe(transcriptionObject, newTranscribe=true) {
+function getFromS3Bucket(bucket, key, callback) {
+  console.log("KEY ", key)
+  s3.getObject({
+    Bucket: bucket,
+    Key: key
+  }, callback);
+}
+
+function transcribe(transcriptionObject, newTranscribe=true, callback) {
   this.transcriptionObject = transcriptionObject;
-  console.log("newTranscribe? ", newTranscribe)
   if (newTranscribe == true){
-    startTranscriptionJob(transcriptionObject);
-  } 
+    startTranscriptionJob(transcriptionObject, callback);
+  } else {
+    callback();
+  }
 }
 function  getProgress () {
   transcribeservice.listTranscriptionJobs({Status:'COMPLETED'}, (err, results)=> {console.log(err, results)});
   transcribeservice.listTranscriptionJobs({Status:'IN_PROGRESS'}, (err, results)=> {console.log(err, results)});
   transcribeservice.listTranscriptionJobs({Status:'FAILED'}, (err, results)=> {console.log(err, results)})
 }
-//Requires global params arg, and returns string containing transcription
-function transcribeComplete (){
-  return getTranscriptionJob();
-}
 
-// console.log("===creating new transcribe with params ", params)
-
-// let transcription = new transcribe(params, true);
-// // Uncomment to the list the progression of all transcription jobs
-// getProgress();
-
-// setTimeout(() => {
-transcribeComplete();
-// }, 5000)
+transcribe(params, true, (err, response) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+  console.log("===transcribe response", response)
+  getTranscriptionJob((err, body) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    console.log("body", body)
+    getFromS3Bucket(params.outputBucketName, params.jobName + '.json', (err, bucketContents) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      console.log("bucketContents", bucketContents)
+    });
+  });
+});
