@@ -36,8 +36,7 @@ function getTranscriptionJob(callback) {
   }, callback);
 }
 
-function getFromS3Bucket(bucket, key, callback) {
-  console.log("KEY ", key)
+function getFromS3Bucket(bucket, key, callback) { 
   s3.getObject({
     Bucket: bucket,
     Key: key
@@ -64,18 +63,31 @@ transcribe(params, true, (err, response) => {
     return;
   }
   console.log("===transcribe response", response)
-  getTranscriptionJob((err, body) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    console.log("body", body)
-    getFromS3Bucket(params.outputBucketName, params.jobName + '.json', (err, bucketContents) => {
+
+  function tryToGetTranscriptionJob() {
+    getTranscriptionJob((err, body) => {
       if (err) {
         console.error(err);
         return;
       }
-      console.log("bucketContents", bucketContents)
+      if (body.TranscriptionJob.TranscriptionJobStatus === 'FAILED') {
+        console.error(body);
+        return;
+      }
+      if (body.TranscriptionJob.TranscriptionJobStatus === 'IN_PROGRESS') {
+        console.log("IN IN_PROGRESS", body)
+        setTimeout(tryToGetTranscriptionJob, 5000);
+        return;
+      }
+      console.log("body", body)
+      getFromS3Bucket(params.outputBucketName, params.jobName + '.json', (err, bucketContents) => { 
+        if (err) {
+          console.error(err);
+          return;
+        }
+        console.log("bucketContents", bucketContents)
+      });
     });
-  });
+  }
+  tryToGetTranscriptionJob();
 });
