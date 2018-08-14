@@ -49,27 +49,22 @@ function getVocabulary(vocabulary){
         for (let i=0; i<=vocabularies.length - 1; i++) {
           if(vocabularies[i].VocabularyName === vocabulary){
             console.log(vocabularies[i]);
+    //       let currentVocabulary = vocabularies[i];
+    //       let state = vocabularies[i].VocabularyState;
+    //       const _ready = 'READY';
+    //       const _failed = 'FAILED';
+    //       if(state === _ready || state === _failed){
+    //         console.log(currentVocabulary);
+    //         return 
+    //       }else {
+    //         console.log('Still Pending')
+    //         setTimeout(getVocabulary, 5000);
+    //         return 
           }
         }
       }
     })
 }
-      //       let currentVocabulary = vocabularies[i];
-      //       let state = vocabularies[i].VocabularyState;
-      //       const _ready = 'READY';
-      //       const _failed = 'FAILED';
-      //       if(state === _ready || state === _failed){
-      //         console.log(currentVocabulary);
-      //         return 
-      //       }else {
-      //         console.log('Still Pending')
-      //         setTimeout(getVocabulary, 5000);
-      //         return 
-      //       }
-      //     }            
-      //   }
-      // });
-// }
 
 // Create an request to start a transcription job to api
 function generateVocabulary(params={}, callback){
