@@ -21,7 +21,6 @@ let vocabularyObject = {
   Phrases: ["candidates", "talkhiring","jobseekers","resume"], // Array of Strings
   VocabularyName: generateRandomString(),
 }
-let isReady = null;
 
 // Create a bucket for the audio file
 function generateBucket(bucketName, audioFile){
