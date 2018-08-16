@@ -58,14 +58,16 @@ function getVocabulary(obj){
 	          if(state === _ready || state === _failed){
 	            console.log(`===Finished loading vocabulary ${name}`);
 	            gotVocabulary = true;
+	            return
 	          } 
 			}
 	    });
+	    if (gotVocabulary !== true) {
+    		setTimeout(getVocabulary,20000)
+    	}  else {return}
 	  }
     }); 
-    if (gotVocabulary !== true) {
-    	setTimeout(getVocabulary,20000)
-    }  else {return}
+    
 }
 
 function deleteVocabulary(all=false, obj){
@@ -159,7 +161,7 @@ function transcribe(transcriptionObject, vocabularyObject, newTranscribe=true, c
 	    getVocabulary();
 	    // listVocabularies();
 	    // deleteVocabulary();
-	    // startTranscriptionJob(transcriptionObject, callback);
+	    startTranscriptionJob(transcriptionObject, callback);
 	 }
 	if (newTranscribe == true){
 		getTranscription()
