@@ -173,7 +173,7 @@ function transcribe(transcriptionObject, createVocabularyObject, newTranscribe=t
       setTimeout(sendTranscription,10000)
     }
   }
-  if (newTranscribe == true){
+  if (newTranscribe === true){
     sendTranscription();
   } else {
     callback();
