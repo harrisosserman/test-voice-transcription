@@ -101,16 +101,21 @@ function getVocabulary(name, callback){
   transcribeservice.getVocabulary({VocabularyName:name}, callback);
 }
 
-function deleteVocabulary(deleteFiveEntries=false, obj){
+function deleteVocabulary(deleteFiveEntries=false, name='', namesList=[]){
   if (deleteFiveEntries){
     deleteFive()
   } else {
-    deleteOne(obj);
+    deleteOne(name);
   }
-  function deleteOne(obj){
-    transcribeservice.deleteVocabulary({VocabularyName:obj}, (err,data)=>{
+  function deleteOne(name){
+    transcribeservice.deleteVocabulary({VocabularyName:name}, (err,data)=>{
     if (err) console.log(err, err.stack); // an error occurred
     else     console.log(data);           // successful response
+    });
+  }
+  function deleteList(list){
+    namesList.forEach((name){
+      deleteOne(name)
     });
   }
   
