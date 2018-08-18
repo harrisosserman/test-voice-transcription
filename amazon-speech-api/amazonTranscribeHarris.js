@@ -4,25 +4,23 @@ AWS.config.update({region:'us-east-1'});
 const transcribeservice = new AWS.TranscribeService();
 const s3 = new AWS.S3();
 
-function generateRandomString() {
-  return Math.random().toString(36).substring(7);
-}
 let fetchedVocabulary = false;
-
-let transcriptionObject = {
+const transcriptionObject = {
   file: 'https://s3.amazonaws.com/talk-long-example/REC-40.-Driving.mp3',
   createBucket: generateRandomString(),
   format: 'mp3',
   jobName: generateRandomString(),
   outputBucketName: 'talk-long-example',
 };
-
-let vocabularyObject = {
+const createVocabularyObject = {
   LanguageCode: 'en-US',
   Phrases: ["candidates", "talkhiring","jobseekers","resume"], // Array of Strings
   VocabularyName: generateRandomString(),
 }
 
+function generateRandomString() {
+  return Math.random().toString(36).substring(7);
+}
 // Create a bucket for the audio file
 function createBucket(bucketName, audioFile){
   s3.createBucket({Bucket: bucketName}, function(err, data) {
@@ -40,51 +38,7 @@ function createBucket(bucketName, audioFile){
      }
   })
 }
-
-function getVocabulary(name, callback){
-	console.log(`===Checking if vocabulary ${name} is ready...`);
-	transcribeservice.getVocabulary({VocabularyName:name}, callback);
-}
-
-function deleteVocabulary(all=false, obj){
-	if (all){
-		deleteAll()
-	} else {
-		deleteFunction(obj);
-	}
-	function deleteFunction(obj){
-		transcribeservice.deleteVocabulary({VocabularyName:obj}, (err,data)=>{
-		if (err) console.log(err, err.stack); // an error occurred
-		else     console.log(data);           // successful response
-		});
-	}
-	
-	function deleteAll(){
-		transcribeservice.listVocabularies({},(err,data)=>{
-			if (err) {console.log(err, err.stack)} // an error occurred
-	  		else {
-	  			data.Vocabularies.forEach((vocabulary)=>{
-	  				transcribeservice.deleteVocabulary({
-	  					VocabularyName: vocabulary.VocabularyName
-	  				},(err,data)=>{
-	  				if (err) {console.log(err, err.stack)}
-	  				else {console.log(vocabulary, "Successfully Deleted")}
-	  				});
-	  			});
-	  		}
-		});
-	}
-}
-
-function listVocabularies(){
-	transcribeservice.listVocabularies({},(err,data)=>{
-			if (err) {console.log(err, err.stack)} // an error occurred
-	  		else {
-	  			console.log(data.Vocabularies)
-	  		}
-		})
-}
-// Create an request to start a transcription job to api
+// Create an request to createVocabulary to api
 function createVocabulary(params={}, callback){
     transcribeservice.createVocabulary({
       LanguageCode: params.LanguageCode,
@@ -92,21 +46,25 @@ function createVocabulary(params={}, callback){
       VocabularyName: params.VocabularyName
       }, createVocabularyHandler);
   }
+// Handle if vocabulary list has to many vocabularies
 function createVocabularyHandler(err,data){
     if (err){
-    	console.log(err, err.stack);
-    	if (err.message ==  'You have too many vocabularies. Delete a vocabulary and try your request again.'){
-    		//Auto Deleting Vocabularies
-    		console.log('===Auto-deleting Vocabularies to make space');
-    		deleteVocabulary(all=true)
-    	} 
+      console.log(err, err.stack);
+      if (err.message ==  'You have too many vocabularies. Delete a vocabulary and try your request again.'){
+        //===Auto Deleting Vocabularies: development
+        console.log('===Auto-deleting Vocabularies to make space');
+        deleteVocabulary(true)
+      } 
     } 
     else {
       console.log('===Creating Vocabulary');
       console.log(data)
       console.log("===Starting getVocabulary");
+      
     }  
 }
+
+// Create an request to start a transcription job to api
 function startTranscriptionJob(transcriptionObject, callback) {
   const params = {
     LanguageCode: 'en-US',
@@ -118,12 +76,13 @@ function startTranscriptionJob(transcriptionObject, callback) {
     OutputBucketName: transcriptionObject.outputBucketName,
     TranscriptionJobName: transcriptionObject.jobName, /* required */
     Settings: {
-      VocabularyName: vocabularyObject.VocabularyName // To set the vocabulary
+       // Setting vocabulary
+      VocabularyName: createVocabularyObject.VocabularyName
     }
   }
   transcribeservice.startTranscriptionJob(params, callback);
 };
-
+// Create an request to get transcription job to api 
 function getTranscriptionJob(callback) {
   transcribeservice.getTranscriptionJob({
     TranscriptionJobName: transcriptionObject.jobName
@@ -136,45 +95,87 @@ function getFromS3Bucket(bucket, key, callback) {
     Key: key
   }, callback);
 }
-
-function transcribe(transcriptionObject, vocabularyObject, newTranscribe=true, callback) {
-	function sendTranscription(){
-		if (fetchedVocabulary){
-			getVocabulary(vocabularyObject.VocabularyName,(err,data)=> {
-				if (err) {console.log(err, err.stack)} // an error occurred
-				else {
-				  	const state = data.VocabularyState;
-				  	console.log('The current state of the vocabulary is',state);
-				  	if (state === 'READY' || state === 'FAILED'){
-				  		if (state === 'FAILED') {
-				  			return console.log(data);
-				  		}
-				  		console.log('===Starting Transcription Job');
-				  		return startTranscriptionJob(transcriptionObject, callback);
-				  	} else {setTimeout(sendTranscription,10000)};
-				}
-			})
-		} else{
-			createBucket(transcriptionObject.createBucket, transcriptionObject.file);
-		    createVocabulary(vocabularyObject);
-		    fetchedVocabulary = true;
-		    setTimeout(sendTranscription,10000)
-		}
-	}
-	if (newTranscribe == true){
-		sendTranscription();
-		
-	} else {
-		callback();
-	}
-}
-function getProgress () {
-  transcribeservice.listTranscriptionJobs({Status:'COMPLETED'}, (err, results)=> {console.log(err, results)});
-  transcribeservice.listTranscriptionJobs({Status:'IN_PROGRESS'}, (err, results)=> {console.log(err, results)});
-  transcribeservice.listTranscriptionJobs({Status:'FAILED'}, (err, results)=> {console.log(err, results)})
+// Create an request to start a transcription job to api
+function getVocabulary(name, callback){
+  console.log(`===Checking if vocabulary ${name} is ready...`);
+  transcribeservice.getVocabulary({VocabularyName:name}, callback);
 }
 
-transcribe(transcriptionObject, vocabularyObject, true, (err, response) => {
+function deleteVocabulary(deleteFiveEntries=false, obj){
+  if (deleteFiveEntries){
+    deleteFive()
+  } else {
+    deleteOne(obj);
+  }
+  function deleteOne(obj){
+    transcribeservice.deleteVocabulary({VocabularyName:obj}, (err,data)=>{
+    if (err) console.log(err, err.stack); // an error occurred
+    else     console.log(data);           // successful response
+    });
+  }
+  
+  function deleteFive(){
+    transcribeservice.listVocabularies({},(err,data)=>{
+      if (err) {console.log(err, err.stack)} // an error occurred
+        else {
+          data.Vocabularies.forEach((vocabulary)=>{
+            transcribeservice.deleteVocabulary({
+              VocabularyName: vocabulary.VocabularyName
+            },(err,data)=>{
+            if (err) {console.log(err, err.stack)}
+            else {console.log(vocabulary, "Successfully Deleted")}
+            });
+          });
+        }
+    });
+  }
+}
+// Create an request to list Vocabularies api
+function listVocabularies(){
+  transcribeservice.listVocabularies({},(err,data)=>{
+      if (err) {console.log(err, err.stack)} // an error occurred
+        else {
+          console.log(data.Vocabularies)
+        }
+  })
+}
+
+// Control flow of api
+function transcribe(transcriptionObject, createVocabularyObject, newTranscribe=true, callback) {  
+  function sendTranscription(){
+    if (fetchedVocabulary){
+      // Returns startTranscription, or console.log's failed response
+      getVocabulary(createVocabularyObject.VocabularyName,(err,data)=> {
+        if (err) {console.log(err, err.stack)} // an error occurred
+        else {
+            const state = data.VocabularyState;
+            console.log('The current state of the vocabulary is',state);
+            if (state === 'READY' || state === 'FAILED'){
+              if (state === 'FAILED') {
+                return console.log(data);
+              }
+              console.log('===Starting Transcription Job');
+              return startTranscriptionJob(transcriptionObject, callback);
+            } else {setTimeout(sendTranscription,10000)};
+        }
+      })
+    } else{
+      // Creating bucket and vocabulary
+      createBucket(transcriptionObject.createBucket, transcriptionObject.file);
+      createVocabulary(createVocabularyObject);
+      // Setting fetched Vocabulary, starting getVocabulary loop
+      fetchedVocabulary = true;
+      setTimeout(sendTranscription,10000)
+    }
+  }
+  if (newTranscribe == true){
+    sendTranscription();
+  } else {
+    callback();
+  }
+}
+// Start transcription
+transcribe(transcriptionObject, createVocabularyObject, true, (err, response) => {
   if (err) {
     console.error(err);
     return;
@@ -214,4 +215,3 @@ transcribe(transcriptionObject, vocabularyObject, true, (err, response) => {
   }
   tryToGetTranscriptionJob();
 });
-
